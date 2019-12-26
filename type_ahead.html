@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Type Ahead 👀</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<form class="search-form">
+<input type="text" class="search" placeholder="City or State">
+<ul class="suggestions">
+<li>Filter for a city</li>
+<li>or a state</li>
+</ul>
+</form>
+<script>
+const endpoint = 'https://gist.githubusercontent.com/Miserlou/c5cd8364bf9b2420bb29/raw/2bf258763cdddd704f8ffd3ea9a3e81d25e2c6f6/cities.json';
+// it contains a huge array where each eement of the array is a dictionary and contains city, state, population as key values
+const cities = [];
+fetch(endpoint)
+.then(blob => blob.json())
+.then(data => cities.push(...data));
+// let cities=[]; cities.push(data) will form an array of 1000 elements within an array(nested array), to make only 1 array of 1000 elements we spread it into the function which is push here using ...
+function findMatches(wordToMatch, cities) {
+return cities.filter(place => {
+// here we need to figure out if the city or state matches what was searched and if the below condition evaluates to true then place is returned containing the state, city and population
+const regex = new RegExp(wordToMatch, 'gi');
+// a regular expression is formed for the word to be searched and it will be global and case insensitive i.e. if the string contains more than 1 matching duo it should show that too
+return place.city.match(regex) || place.state.match(regex)
+// if any of the above situation evaluates to true the place is returned.
+});
+}
+// function to convert the string population into numbers containing commas
+function numberWithCommas(x) {
+return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+}
+function displayMatches() {
+const matchArray = findMatches(this.value, cities);
+// map returns an array of list mapped with the matchArray array ; list contains the city, state amd population of the place matched
+const html = matchArray.map(place => {
+const regex = new RegExp(this.value, 'gi');
+const cityName = place.city.replace(regex, `<span class="hl">${this.value}</span>`);
+// if the Wordtomatch matches with the part of the city or the whole city then it should get highlighted, so we will replace that part of the city with the cityname which is now highlighted wordtomatch
+const stateName = place.state.replace(regex, `<span class="hl">${this.value}</span>`);
+// `` for spreading the return into multiple lines
+return `
+<li>
+<span class="name">${cityName}, ${stateName}</span>
+<span class="population">${numberWithCommas(place.population)}</span>
+</li>
+`;
+// we are returning a list to the map function because in the suggestions class we will have to show all the places as indivisual list elements
+}).join('')
+// since map will return an array therefore we convert each list element into a long string by adding .join
+suggestions.innerHTML = html;
+}
+
+const searchInput = document.querySelector('.search');
+const suggestions = document.querySelector('.suggestions');
+// when the keyup or change event takes place displayMatches function is called
+searchInput.addEventListener('change', displayMatches);
+searchInput.addEventListener('keyup', displayMatches);
+</script>
+</body>
+</html>
